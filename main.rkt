@@ -4,6 +4,7 @@
          racket/format
          racket/list
          racket/match
+         racket/path
          racket/port
          racket/set
          racket/string
@@ -230,7 +231,11 @@
   (define elements (read-decoded-port decoded-port))
   (define fsize (file-size filename))
 
-  (make-wxme-viewer-from-elements elements filename fsize
+  (define display-name
+    (let ([p (string->path filename)])
+      (path->string (file-name-from-path p))))
+
+  (make-wxme-viewer-from-elements elements display-name fsize
                                   snip-classes data-classes
                                   #:width w #:height h))
 
