@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: current
+      - name: Install dependencies
+        run: raco pkg install --auto --skip-installed --batch kettle-lib kettle-test-lib wxme-lib
+      - name: Run tests
+        run: raco test -y tests/
