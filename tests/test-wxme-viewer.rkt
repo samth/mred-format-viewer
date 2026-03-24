@@ -382,46 +382,46 @@
                      #:expected-min-lines 2
                      #:expected-min-snips 2)
 
-(test-real-wxme-file "commentbox.rkt"
+(test-real-wxme-file "commentbox.wxme"
                      #:expected-min-lines 5
                      #:expected-min-snips 1
                      #:expect-text "#lang racket/base")
 
-(test-real-wxme-file "image-and-comment-box.rkt"
+(test-real-wxme-file "image-and-comment-box.wxme"
                      #:expected-min-lines 5
                      #:expected-min-snips 1
                      #:expect-text "define x")
 
-(test-real-wxme-file "collapsed.rkt"
+(test-real-wxme-file "collapsed.wxme"
                      #:expected-min-lines 5
                      #:expect-text "#lang racket/base")
 
-(test-real-wxme-file "color-red.rkt"
+(test-real-wxme-file "color-red.wxme"
                      #:expected-min-lines 3
                      #:expected-min-snips 1
                      #:expect-text "require 2htdp/image")
 
-(test-real-wxme-file "image-snip.rkt"
+(test-real-wxme-file "image-snip.wxme"
                      #:expected-min-lines 2
                      #:expected-min-snips 1
                      #:expect-text "#lang racket/base")
 
-(test-real-wxme-file "number-snip.rkt"
+(test-real-wxme-file "number-snip.wxme"
                      #:expected-min-lines 2
                      #:expected-min-snips 1
                      #:expect-text "#lang racket")
 
-(test-real-wxme-file "perform-whack.rkt"
+(test-real-wxme-file "perform-whack.wxme"
                      #:expected-min-lines 20
                      #:expected-min-snips 1
                      #:expect-text "require")
 
-(test-real-wxme-file "pict-snip.rkt"
+(test-real-wxme-file "pict-snip.wxme"
                      #:expected-min-lines 3
                      #:expected-min-snips 1
                      #:expect-text "#lang racket/base")
 
-(test-real-wxme-file "xml-snip-bug.rkt"
+(test-real-wxme-file "xml-snip-bug.wxme"
                      #:expected-min-lines 3
                      #:expected-min-snips 1
                      #:expect-text "#lang racket/gui")
