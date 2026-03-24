@@ -10,6 +10,6 @@ jobs:
         with:
           version: current
       - name: Install dependencies
-        run: raco pkg install --auto --skip-installed --batch --scope installation kettle-lib kettle-test-lib
+        run: raco pkg install --auto --skip-installed --batch kettle-lib kettle-test-lib
       - name: Run tests
         run: raco test -y tests/
