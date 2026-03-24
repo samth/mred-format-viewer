@@ -3,9 +3,13 @@
 (require rackunit
          racket/set
          racket/match
+         racket/path
+         racket/runtime-path
          kettle/test
          (except-in kettle/program init)
          "../main.rkt")
+
+(define-runtime-path examples-dir "examples")
 
 ;; ============================================================
 ;; Test helpers — synthetic snip-info structs (no real WXME objects needed)
@@ -284,3 +288,140 @@
   (define wv (make-test-viewer))
   (define tp (make-test-program wv))
   (check-test-program-contains tp "test.wxme"))
+
+;; ============================================================
+;; E2E tests with real WXME files
+
+(define (example-path name)
+  (path->string (build-path examples-dir name)))
+
+;; Helper: load a real WXME file, create viewer, run through basic interactions
+(define (test-real-wxme-file name
+                             #:expected-min-lines [min-lines 1]
+                             #:expected-min-snips [min-snips 0]
+                             #:expect-text [expect-text #f])
+  (test-case (format "e2e real file: ~a" name)
+    (define wv (make-wxme-viewer (example-path name)))
+
+    ;; Basic model sanity
+    (check-true (>= (wxme-viewer-line-count wv) min-lines)
+                (format "expected at least ~a lines, got ~a"
+                        min-lines (wxme-viewer-line-count wv)))
+    (check-true (>= (vector-length (wxme-viewer-snip-infos wv)) min-snips)
+                (format "expected at least ~a snips, got ~a"
+                        min-snips (vector-length (wxme-viewer-snip-infos wv))))
+
+    ;; E2E: create test program, verify it renders
+    (define tp (make-test-program wv))
+    (check-test-program-running tp)
+
+    ;; Verify expected text appears in rendered view
+    (when expect-text
+      (check-test-program-contains tp expect-text))
+
+    ;; Header shows filename
+    (check-test-program-contains tp name)
+
+    ;; Scroll down and back up
+    (test-program-press tp #\j)
+    (check-test-program-running tp)
+    (test-program-press tp #\k)
+    (check-test-program-running tp)
+
+    ;; Page down and up
+    (test-program-press tp #\space)
+    (check-test-program-running tp)
+    (test-program-press tp #\b)
+    (check-test-program-running tp)
+
+    ;; Goto bottom and top
+    (test-program-press tp #\G)
+    (check-test-program-running tp)
+    (test-program-press tp #\g)
+    (check-test-program-running tp)
+
+    ;; If there are snips, test Tab navigation and toggle
+    (when (> (vector-length (wxme-viewer-snip-infos wv)) 0)
+      ;; Tab to first snip
+      (test-program-press tp 'tab)
+      (define m-at-snip (test-program-model tp))
+      (check-equal? (line-ann-type
+                     (vector-ref (wxme-viewer-annotations m-at-snip)
+                                 (wxme-viewer-cursor-line m-at-snip)))
+                    'snip-placeholder)
+
+      ;; Expand snip detail
+      (define lc-before (wxme-viewer-line-count m-at-snip))
+      (test-program-press tp 'enter)
+      (define m-expanded (test-program-model tp))
+      (check-true (> (wxme-viewer-line-count m-expanded) lc-before)
+                  "expanding snip should add detail lines")
+
+      ;; Scroll down to make detail lines visible, then check
+      (test-program-press tp #\j)
+      (check-test-program-contains tp "Kind:")
+
+      ;; Scroll back up to the snip-placeholder and collapse
+      (test-program-press tp #\k)
+      (test-program-press tp 'enter)
+      (define m-collapsed (test-program-model tp))
+      (check-equal? (wxme-viewer-line-count m-collapsed) lc-before
+                    "collapsing should restore original line count"))
+
+    ;; Resize
+    (test-program-resize tp 100 30)
+    (check-test-program-running tp)
+
+    ;; Quit
+    (test-program-press tp #\q)
+    (check-test-program-done tp)))
+
+;; --- Test each example file ---
+
+(test-real-wxme-file "image.wxme"
+                     #:expected-min-lines 2
+                     #:expected-min-snips 2)
+
+(test-real-wxme-file "commentbox.rkt"
+                     #:expected-min-lines 5
+                     #:expected-min-snips 1
+                     #:expect-text "#lang racket/base")
+
+(test-real-wxme-file "image-and-comment-box.rkt"
+                     #:expected-min-lines 5
+                     #:expected-min-snips 1
+                     #:expect-text "define x")
+
+(test-real-wxme-file "collapsed.rkt"
+                     #:expected-min-lines 5
+                     #:expect-text "#lang racket/base")
+
+(test-real-wxme-file "color-red.rkt"
+                     #:expected-min-lines 3
+                     #:expected-min-snips 1
+                     #:expect-text "require 2htdp/image")
+
+(test-real-wxme-file "image-snip.rkt"
+                     #:expected-min-lines 2
+                     #:expected-min-snips 1
+                     #:expect-text "#lang racket/base")
+
+(test-real-wxme-file "number-snip.rkt"
+                     #:expected-min-lines 2
+                     #:expected-min-snips 1
+                     #:expect-text "#lang racket")
+
+(test-real-wxme-file "perform-whack.rkt"
+                     #:expected-min-lines 20
+                     #:expected-min-snips 1
+                     #:expect-text "require")
+
+(test-real-wxme-file "pict-snip.rkt"
+                     #:expected-min-lines 3
+                     #:expected-min-snips 1
+                     #:expect-text "#lang racket/base")
+
+(test-real-wxme-file "xml-snip-bug.rkt"
+                     #:expected-min-lines 3
+                     #:expected-min-snips 1
+                     #:expect-text "#lang racket/gui")
